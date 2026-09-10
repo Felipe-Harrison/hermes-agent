@@ -283,6 +283,8 @@ COMMAND_REGISTRY: list[CommandDef] = [
                args_hint="[days]", desktop="advanced"),
     CommandDef("platforms", "Show gateway/messaging platform status", "Info",
                cli_only=True, aliases=("gateway",), desktop="terminal"),
+    CommandDef("mcps", "Show configured MCP servers and their connection status", "Info",
+               cli_only=True, desktop="terminal"),
     CommandDef("platform", "Pause, resume, or list a failing gateway platform", "Info",
                gateway_only=True, args_hint="<pause|resume|list> [name]"),
     CommandDef("copy", "Copy the last assistant response to clipboard", "Info",
