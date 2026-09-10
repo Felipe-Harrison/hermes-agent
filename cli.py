@@ -38,6 +38,7 @@ from hermes_cli.cli_billing_mixin import CLIBillingMixin
 from hermes_cli.cli_loops_mixin import CLILoopsMixin
 from hermes_cli.cli_info_mixin import CLIInfoMixin
 from hermes_cli.cli_mcps_mixin import CLIMcpsMixin
+from hermes_cli.cli_terminal_title_mixin import CLITerminalTitleMixin
 from hermes_cli.cli_terminal_mixin import CLITerminalMixin
 from hermes_cli.cli_modal_mixin import CLIModalMixin
 from hermes_cli.cli_stream_mixin import CLIStreamMixin
@@ -2528,7 +2529,7 @@ from hermes_cli.cli_chat_turn_mixin import CLIChatTurnMixin
 _PASTE_REF_RE = re.compile(r'\[Pasted text #\d+: \d+ lines \u2192 (.+?)\]')
 
 
-class HermesCLI(CLIProcessNotificationsMixin, CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLITuiMixin, CLIStatusBarMixin, CLIVoiceMixin, CLIModelSwitchMixin, CLISessionMixin, CLIStreamMixin, CLIModalMixin, CLITerminalMixin, CLIInfoMixin, CLIMcpsMixin, CLILoopsMixin, CLIChatTurnMixin):
+class HermesCLI(CLIProcessNotificationsMixin, CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLITuiMixin, CLIStatusBarMixin, CLIVoiceMixin, CLIModelSwitchMixin, CLISessionMixin, CLIStreamMixin, CLIModalMixin, CLITerminalMixin, CLIInfoMixin, CLIMcpsMixin, CLITerminalTitleMixin, CLILoopsMixin, CLIChatTurnMixin):
     """Interactive REPL for the Hermes Agent."""
 
     # Seeded -q first message (see _should_seed_interactive); run() re-creates
@@ -3504,6 +3505,7 @@ class HermesCLI(CLIProcessNotificationsMixin, CLIAgentSetupMixin, CLICommandsMix
         self._pet_turn_error = self._pet_reasoning = False
         self._turn_summary_begin()
         self._app.invalidate()
+        self._update_terminal_title()
         try:
             self.chat(notification_preview or user_input, images=submit_images or None, voice_input=is_voice_input)
         finally:
@@ -3534,6 +3536,7 @@ class HermesCLI(CLIProcessNotificationsMixin, CLIAgentSetupMixin, CLICommandsMix
         self._turn_summary_emit()
         self._interactive_turn = False
         self._app.invalidate()
+        self._update_terminal_title()
 
         # After an interrupt the renderer may have drifted (leaked CPR text, VT100 parser
         # stalled mid-escape): drain stray bytes and force a clean redraw.

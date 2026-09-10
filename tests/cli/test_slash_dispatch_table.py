@@ -10,13 +10,15 @@ from unittest.mock import MagicMock, patch
 from cli import HermesCLI
 
 # Command names that had an explicit branch in the pre-dispatch-table chain.
+# "mcps" is a fork-only addition (see hermes_cli/cli_mcps_mixin.py), not part of the
+# original upstream chain; included here so the registry-parity guard below accounts for it.
 OLD_CHAIN_COMMANDS = [
     "exit", "quit", "help", "palette", "whoami", "profile", "tools", "toolsets",
     "config", "redraw", "clear", "history", "title", "handoff", "new", "resume",
     "sessions", "model", "codex-runtime", "personality", "pet", "hatch", "retry",
     "prompt", "undo", "branch", "worktree", "save", "cron", "suggestions",
     "blueprint", "curator", "kanban", "skills", "learn", "init", "memory",
-    "platforms", "status", "context", "egress", "statusbar", "diff", "battery",
+    "platforms", "mcps", "status", "context", "egress", "statusbar", "diff", "battery",
     "timestamps", "verbose", "focus", "footer", "yolo", "approvals", "reasoning",
     "fast", "compress", "usage", "subscription", "topup", "insights", "copy",
     "debug", "update", "version", "paste", "image", "reload", "reload-mcp",

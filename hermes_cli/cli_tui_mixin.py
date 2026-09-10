@@ -405,6 +405,9 @@ class CLITuiMixin:
             monitor = getattr(self, "_subagent_monitor", None)
             if monitor is not None:
                 monitor.tick()
+            update_title = getattr(self, "_update_terminal_title", None)
+            if callable(update_title):
+                update_title()
             if self._command_running:
                 self._invalidate(min_interval=0.1)
                 time.sleep(0.1)
