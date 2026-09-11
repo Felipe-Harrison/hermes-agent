@@ -268,6 +268,15 @@ class CLIStatusBarMixin:
         for key in _AGENT_COUNTERS:
             snapshot[key] = getattr(agent, key, 0) or 0
 
+        # Provider-quota bar (◉ ████████░░ 76% · resets 18:20): reads a background-refreshed
+        # cache only — never blocks the repaint on a live provider call (hermes_cli.account_quota_bar).
+        try:
+            from hermes_cli.account_quota_bar import cached_quota_bar_label
+            snapshot["quota_bar_label"] = cached_quota_bar_label(
+                getattr(agent, "provider", None), getattr(agent, "base_url", None))
+        except Exception:
+            snapshot["quota_bar_label"] = ""
+
         compressor = getattr(agent, "context_compressor", None)
         if compressor:
             # last_prompt_tokens parks at the -1 sentinel right after a compression until the
@@ -1031,6 +1040,9 @@ class CLIStatusBarMixin:
             cache = self._cache_hit_rate(snapshot, precision=1 if wide else 0)
             if cache:
                 add("cache_hit", self._cache_hit_rate_style(cache[0]), cache[1])
+            quota_label = snapshot.get("quota_bar_label") or ""
+            if quota_label:
+                add("quota_bar", _STRONG, quota_label)
             if wide:
                 for name, key, glyph in (
                     ("latency", "avg_latency_label", "◷"), ("tps", "avg_velocity_label", "↑")):

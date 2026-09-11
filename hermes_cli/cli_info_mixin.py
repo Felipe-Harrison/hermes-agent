@@ -712,6 +712,14 @@ class CLIInfoMixin:
         print(f"  Total tokens:              {agent.session_total_tokens:>10,}")
         print(f"  API calls:                 {calls:>10,}")
         print(f"  Session duration:          {elapsed:>10}")
+        cost_status = getattr(agent, "session_cost_status", "unknown")
+        if cost_status != "unknown":
+            from decimal import Decimal
+            from agent.usage_pricing import format_cost_label
+            cost_amount = Decimal(str(getattr(agent, "session_estimated_cost_usd", 0.0) or 0.0))
+            cost_label = format_cost_label(cost_amount)
+            cost_suffix = " (included)" if cost_status == "included" else ""
+            print(f"  Estimated cost:            {cost_label:>10}{cost_suffix}")
         print(f"  {'─' * 40}")
         from agent.context_breakdown import context_display_source
         mark = "~" if context_display_source(compressor) != "provider_usage" else ""
@@ -722,7 +730,7 @@ class CLIInfoMixin:
         # Account limits — fetched off-thread with a hard timeout so slow provider APIs don't
         # hang the prompt. Lazy import: pulls the OpenAI SDK chain.
         provider = self._agent_or_self("provider")
-        from agent.account_usage import fetch_account_usage, render_account_usage_lines
+        from agent.account_usage import fetch_account_usage, render_account_usage_bars, render_account_usage_lines
         account_snapshot = None
         if provider:
             with concurrent.futures.ThreadPoolExecutor(max_workers=1) as _pool:
@@ -733,7 +741,18 @@ class CLIInfoMixin:
                     ).result(timeout=10.0)
                 except (concurrent.futures.TimeoutError, Exception):
                     account_snapshot = None
-        account_lines = [f"  {line}" for line in render_account_usage_lines(account_snapshot)]
+        # Windows with a live usage_percent render as block bars (Current session / Current
+        # week, etc.); the plain-text header/plan/details/unavailable-reason lines still come
+        # from render_account_usage_lines, with its own window text lines stripped so the two
+        # renderings never duplicate the same information.
+        bar_lines = render_account_usage_bars(account_snapshot)
+        text_lines = render_account_usage_lines(account_snapshot)
+        bar_labels = {w.label for w in (account_snapshot.windows if account_snapshot else ()) if w.used_percent is not None}
+        text_lines = [
+            line for line in text_lines
+            if not any(line.startswith(f"{label}:") for label in bar_labels)
+        ]
+        account_lines = [f"  {line}" for line in bar_lines + text_lines]
         if account_lines:
             print()
             for line in account_lines:

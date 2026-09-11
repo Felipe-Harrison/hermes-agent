@@ -110,6 +110,69 @@ def render_account_usage_lines(snapshot: Optional[AccountUsageSnapshot], *, mark
     return lines
 
 
+# ── Block-bar rendering (CLI ``/usage`` only; render_account_usage_lines above stays the
+# plain-text form used by the gateway and other markdown-facing surfaces) ──
+
+_USAGE_BAR_WIDTH = 50
+
+
+def _bar_glyphs(used_percent: float, width: int = _USAGE_BAR_WIDTH) -> str:
+    """Filled-block bar: full ``█`` cells, one trailing ``▌`` for a >=50% partial cell, no
+    track glyphs for the unfilled remainder (matches Claude Code's ``/usage`` bar style)."""
+    pct = max(0.0, min(100.0, used_percent))
+    filled = pct / 100.0 * width
+    full = int(filled)
+    half = (filled - full) >= 0.5
+    return "█" * full + ("▌" if half else "")
+
+
+def _format_reset_clock(dt: datetime) -> str:
+    """``6:20pm (America/Sao_Paulo)`` — local wall-clock time in the user's configured
+    timezone (``hermes_time.get_timezone()``; server-local when unset)."""
+    try:
+        from hermes_time import get_timezone
+        tz = get_timezone()
+    except Exception:
+        tz = None
+    local = dt.astimezone(tz) if tz is not None else dt.astimezone()
+    hour12 = local.strftime("%I").lstrip("0") or "12"
+    minute = local.strftime("%M")
+    ampm = local.strftime("%p").lower()
+    tz_label = getattr(tz, "key", None) or local.tzname() or ""
+    return f"{hour12}:{minute}{ampm} ({tz_label})" if tz_label else f"{hour12}:{minute}{ampm}"
+
+
+def render_account_usage_bars(snapshot: Optional[AccountUsageSnapshot]) -> list[str]:
+    """CLI-only block-bar rendering of every window that carries ``used_percent``:
+
+    ```
+    Current session
+      ██████████▌                                        21% used
+      Resets 6:20pm (America/Sao_Paulo)
+    ```
+
+    Windows without ``used_percent`` (unavailable) are skipped — no bar to draw. Returns []
+    when the snapshot has no bar-able windows; callers fall back to
+    :func:`render_account_usage_lines` for plan/details/unavailable-reason text.
+    """
+    if not snapshot:
+        return []
+    lines: list[str] = []
+    for window in snapshot.windows:
+        if window.used_percent is None:
+            continue
+        if lines:
+            lines.append("")
+        used = float(window.used_percent)
+        bar = _bar_glyphs(used)
+        label = f"{max(0, round(used))}% used"
+        lines.append(window.label)
+        lines.append(f"  {bar.ljust(_USAGE_BAR_WIDTH + 8)}{label}")
+        if window.reset_at:
+            lines.append(f"  Resets {_format_reset_clock(window.reset_at)}")
+    return lines
+
+
 def _fmt_usd(d: float) -> str:
     return f"${d:,.2f}"
 

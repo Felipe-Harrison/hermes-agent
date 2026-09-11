@@ -3535,6 +3535,16 @@ class HermesCLI(CLIProcessNotificationsMixin, CLIAgentSetupMixin, CLICommandsMix
         self._pet_react_turn_end()
         self._turn_summary_emit()
         self._interactive_turn = False
+        try:
+            from hermes_cli.account_quota_bar import schedule_quota_bar_refresh
+            if self.agent:
+                app = getattr(self, "_app", None)
+                schedule_quota_bar_refresh(
+                    getattr(self.agent, "provider", None), getattr(self.agent, "base_url", None),
+                    getattr(self.agent, "api_key", None), on_update=app.invalidate if app else None,
+                )
+        except Exception:
+            pass
         self._app.invalidate()
         self._update_terminal_title()
 
