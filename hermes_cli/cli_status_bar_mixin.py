@@ -51,6 +51,14 @@ class CLIStatusBarMixin:
             return "class:status-bar-bad"
         return _threshold_style(percent_used, ((50, "warn"),), "good")
 
+    def _quota_bar_style(self, used_percent: Optional[float]) -> str:
+        """25/50/75% ladder requested for the usage bar (finer-grained than the context bar's
+        50/80/95, since provider quota windows reset on their own schedule and users want an
+        earlier heads-up): <25% good, 25-50% warn, 50-75% bad, 75%+ critical."""
+        if used_percent is None:
+            return _STRONG
+        return _threshold_style(used_percent, ((75, "critical"), (50, "bad"), (25, "warn")), "good")
+
     def _cache_hit_rate(self, snapshot: dict, precision: int = 1) -> "tuple[float, str] | None":
         """Return (cache_pct, label) or None without cache data. Prefers the baseline-delta pct
         from ``_get_status_bar_snapshot`` (resets on model switch / compression, so it reflects
@@ -271,11 +279,14 @@ class CLIStatusBarMixin:
         # Provider-quota bar (◉ ████████░░ 76% · resets 18:20): reads a background-refreshed
         # cache only — never blocks the repaint on a live provider call (hermes_cli.account_quota_bar).
         try:
-            from hermes_cli.account_quota_bar import cached_quota_bar_label
-            snapshot["quota_bar_label"] = cached_quota_bar_label(
+            from hermes_cli.account_quota_bar import cached_quota_bar
+            label, used_percent = cached_quota_bar(
                 getattr(agent, "provider", None), getattr(agent, "base_url", None))
+            snapshot["quota_bar_label"] = label
+            snapshot["quota_bar_percent"] = used_percent
         except Exception:
             snapshot["quota_bar_label"] = ""
+            snapshot["quota_bar_percent"] = None
 
         compressor = getattr(agent, "context_compressor", None)
         if compressor:
@@ -1042,7 +1053,7 @@ class CLIStatusBarMixin:
                 add("cache_hit", self._cache_hit_rate_style(cache[0]), cache[1])
             quota_label = snapshot.get("quota_bar_label") or ""
             if quota_label:
-                add("quota_bar", _STRONG, quota_label)
+                add("quota_bar", self._quota_bar_style(snapshot.get("quota_bar_percent")), quota_label)
             if wide:
                 for name, key, glyph in (
                     ("latency", "avg_latency_label", "◷"), ("tps", "avg_velocity_label", "↑")):
