@@ -55,7 +55,7 @@ def format_quota_bar_segment(window) -> str:
     the window carries none)."""
     used = float(window.used_percent)
     bar = f"◉ {_bar_glyphs(used)} {max(0, round(used))}%"
-    return f"{bar}  ·  ↻ {_format_reset_short(window.reset_at)}" if window.reset_at else bar
+    return f"{bar}  ·  resets {_format_reset_short(window.reset_at)}" if window.reset_at else bar
 
 
 def _route_key(provider: str, base_url: Optional[str]) -> tuple[str, str]:
