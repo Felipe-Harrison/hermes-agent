@@ -18,9 +18,9 @@ from agent.pet.constants import PetState
 # busy -> "⏳", else "✓"); WAITING is the only state that maps to the overlay marker, every
 # other "the turn is doing something" state reads as busy.
 _TITLE_MARKER_BY_STATE = {
-    PetState.WAITING: "🫡",
+    PetState.WAITING: "⏳",
     PetState.RUN: "🧠",
-    PetState.REVIEW: "🧐",
+    PetState.REVIEW: "🔍",
 }
 _DEFAULT_MARKER = "🍌"  # fresh session: opened, no turn has run yet
 _DONE_MARKER = "✅"  # idle after the model finished responding (has _last_turn_finished_at)
@@ -56,8 +56,8 @@ class CLITerminalTitleMixin:
         """Refresh the terminal tab/window title if the derived state changed since the last
         call: `<marker> Hermes · <session name>`, or `<marker> Hermes` when no name is set.
 
-        Marker: 🫡 waiting on approval/sudo/secret/clarify/slash-confirm, 🧠 running a tool,
-        🧐 reasoning, 🍌 fresh session (no turn has completed yet), ✅ idle after the model
+        Marker: ⏳ waiting on approval/sudo/secret/clarify/slash-confirm, 🧠 running a tool,
+        🔍 reasoning, 🍌 fresh session (no turn has completed yet), ✅ idle after the model
         finished responding. Session name: the current session title (explicit /title, else
         the auto-derived one already shown in the status bar); omitted entirely when neither
         is set.

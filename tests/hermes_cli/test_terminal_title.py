@@ -1,6 +1,6 @@
 """Tests for the CLI's terminal tab/window title feedback (custom fork addition, not
-upstream). Mirrors the ui-tui frontend's marker scheme: 🫡 waiting on the user (approval /
-clarify / sudo / secret / slash-confirm), 🧠 running a tool, 🧐 reasoning, 🍌 fresh session
+upstream). Mirrors the ui-tui frontend's marker scheme: ⏳ waiting on the user (approval /
+clarify / sudo / secret / slash-confirm), 🧠 running a tool, 🔍 reasoning, 🍌 fresh session
 (no turn has completed yet), ✅ idle after the model finished responding, plus the session
 name (when one is set) -- so several open Hermes tabs are distinguishable at a glance.
 """
@@ -67,7 +67,7 @@ def test_awaiting_input_marker_outranks_busy(monkeypatch):
     stub._agent_running = True
     stub._approval_state = {"response_queue": object()}
     stub._update_terminal_title()
-    assert calls == ["🫡 Hermes · Encontrar GitHub do projeto"]
+    assert calls == ["⏳ Hermes · Encontrar GitHub do projeto"]
 
 
 def test_fresh_session_marker_is_shown_before_any_turn_completes(monkeypatch):
